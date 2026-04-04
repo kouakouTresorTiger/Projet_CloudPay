@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CloudPay – Paiement Sécurisé</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+ <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- ═══════════════════════════════════════
+     APPLICATION (toujours visible)
+═══════════════════════════════════════ -->
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-top">
+      <div class="logo">
+        <div class="logo-icon">🔐</div>
+        <div class="logo-name">Cloud<span>Pay</span></div>
+      </div>
+      <div class="mode-switch">
+        <button class="mode-btn active" id="modeUser"     onclick="setMode('user',this)">Client</button>
+        <button class="mode-btn"        id="modeMerchant" onclick="setMode('merchant',this)">Marchand</button>
+        <button class="mode-btn"        id="modeDev"      onclick="setMode('dev',this)">Dev</button>
+      </div>
+    </div>
+    <nav id="sideNav"></nav>
+    <div class="sb-footer">
+      <div class="user-card" onclick="nav('profile')">
+        <div class="avatar" id="sideAvatar">👤</div>
+        <div class="user-info">
+          <div class="user-name" id="sideUserName">Visiteur</div>
+          <div class="user-plan" id="sideUserPlan">Compte invité</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="breadcrumb"><b id="breadcrumb">Tableau de bord</b></div>
+      <div class="topbar-right">
+        <div class="status-pill">
+          <span class="status-dot green"></span>Opérationnel
+        </div>
+        <button class="icon-btn notif-btn" onclick="nav('notifications')">
+          🔔<span class="notif-badge" id="notifBadge" style="display:none;">0</span>
+        </button>
+
+        <!-- Non connecté -->
+        <div id="authZone">
+          <button class="btn btn-ghost btn-sm" onclick="openModal('loginModal')">Se connecter</button>
+          <button class="btn btn-cta  btn-sm" onclick="openModal('registerModal')">Créer un compte</button>
+        </div>
+
+        <!-- Connecté -->
+        <div id="userZone" style="display:none;align-items:center;gap:10px;">
+          <span id="topUserName" style="font-size:13px;font-weight:600;color:var(--t2);"></span>
+          <button class="btn btn-ghost btn-sm" onclick="confirmLogout()">🚪 Déconnexion</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BANNIÈRE VISITEUR -->
+    <div id="guestBanner" class="guest-banner">
+      👋 Mode <strong>Visiteur</strong> — explorez librement. Créez un compte pour effectuer de vraies transactions.
+      <button class="btn btn-cta btn-sm" onclick="openModal('registerModal')">Créer mon compte</button>
+      <button class="btn-plain" onclick="this.parentElement.style.display='none'">✕</button>
+    </div>
+
+    <div class="content" id="mainContent"></div>
+  </div>
+</div>
+
+<!-- ═══ MODAL LOGIN ═══ -->
+<div class="overlay" id="loginModal">
+  <div class="modal modal-auth">
+    <button class="modal-close" onclick="closeModal('loginModal')">✕</button>
+    <div class="auth-modal-header">
+      <div class="logo-icon" style="width:48px;height:48px;font-size:24px;margin:0 auto 10px;">🔐</div>
+      <div class="modal-title" style="text-align:center;">Connexion</div>
+      <div class="modal-sub"  style="text-align:center;">Accédez à votre compte CloudPay</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input type="email" class="form-input" id="loginEmail" placeholder="email@exemple.com"
+             onkeydown="if(event.key==='Enter')doLogin()" autocomplete="email" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Mot de passe</label>
+      <div class="input-pw-wrap">
+        <input type="password" class="form-input" id="loginPass" placeholder="••••••••"
+               onkeydown="if(event.key==='Enter')doLogin()" autocomplete="current-password" />
+        <button class="pw-toggle" onclick="togglePw('loginPass')">👁</button>
+      </div>
+    </div>
+    <button class="btn btn-cta btn-full btn-lg" onclick="doLogin()">Se connecter →</button>
+
+    <div class="demo-box">
+      <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:8px;">🎯 Accès démo rapide</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">
+        Email : <code>demo@cloudpay.ci</code> &nbsp;·&nbsp; Mot de passe : <code>demo1234</code>
+      </div>
+      <button class="btn btn-ghost btn-sm btn-full" onclick="fillDemo()">
+        ⚡ Remplir et se connecter automatiquement
+      </button>
+    </div>
+
+    <div class="auth-switch">
+      Pas de compte ?
+      <button class="link-btn" onclick="closeModal('loginModal');openModal('registerModal')">Créer un compte gratuit</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL REGISTER ═══ -->
+<div class="overlay" id="registerModal">
+  <div class="modal modal-auth">
+    <button class="modal-close" onclick="closeModal('registerModal')">✕</button>
+    <div class="auth-modal-header">
+      <div class="logo-icon" style="width:48px;height:48px;font-size:24px;margin:0 auto 10px;">🔐</div>
+      <div class="modal-title" style="text-align:center;">Créer un compte</div>
+      <div class="modal-sub"  style="text-align:center;">Gratuit · Instantané · Sécurisé</div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Prénom</label>
+        <input type="text" class="form-input" id="regFirst" placeholder="Kouadio" autocomplete="given-name" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nom</label>
+        <input type="text" class="form-input" id="regLast" placeholder="Jean" autocomplete="family-name" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input type="email" class="form-input" id="regEmail" placeholder="email@exemple.com" autocomplete="email" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Téléphone (optionnel)</label>
+      <input type="tel" class="form-input" id="regPhone" placeholder="+225 07 00 00 00 00" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Mot de passe</label>
+      <div class="input-pw-wrap">
+        <input type="password" class="form-input" id="regPass" placeholder="Minimum 6 caractères"
+               autocomplete="new-password" />
+        <button class="pw-toggle" onclick="togglePw('regPass')">👁</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Type de compte</label>
+      <select class="form-select" id="regType">
+        <option value="personal">👤 Particulier</option>
+        <option value="merchant">🏪 Marchand / E-commerce</option>
+        <option value="developer">💻 Développeur</option>
+      </select>
+    </div>
+    <button class="btn btn-cta btn-full btn-lg" onclick="doRegister()">
+      Créer mon compte gratuit →
+    </button>
+    <div class="auth-switch">
+      Déjà inscrit ?
+      <button class="link-btn" onclick="closeModal('registerModal');openModal('loginModal')">Se connecter</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL PIN ═══ -->
+<div class="overlay" id="pinModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('pinModal')">✕</button>
+    <div class="modal-icon">🔐</div>
+    <div class="modal-title">Confirmer le paiement</div>
+    <div class="modal-sub">Entrez votre code PIN à 6 chiffres</div>
+    <div class="pin-row">
+      <input type="password" maxlength="1" class="form-input pin-input" oninput="pinNext(this,0)" />
+      <input type="password" maxlength="1" class="form-input pin-input" oninput="pinNext(this,1)" />
+      <input type="password" maxlength="1" class="form-input pin-input" oninput="pinNext(this,2)" />
+      <input type="password" maxlength="1" class="form-input pin-input" oninput="pinNext(this,3)" />
+      <input type="password" maxlength="1" class="form-input pin-input" oninput="pinNext(this,4)" />
+      <input type="password" maxlength="1" class="form-input pin-input" oninput="pinNext(this,5)" />
+    </div>
+    <button class="btn btn-cta btn-full btn-lg" onclick="confirmPin()">Confirmer →</button>
+    <p class="pin-hint">Code par défaut : 1 2 3 4 5 6</p>
+  </div>
+</div>
+
+<!-- ═══ MODAL VALIDER LIVRAISON ═══ -->
+<div class="overlay" id="validateModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('validateModal')">✕</button>
+    <div class="modal-icon" style="color:var(--green)">✅</div>
+    <div class="modal-title">Valider la livraison</div>
+    <div class="modal-sub">Le colis est bien arrivé et correspond à votre commande ?</div>
+    <div class="modal-kv" id="validateInfo"></div>
+    <div class="g2 gap-8">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('validateModal')">❌ Signaler un problème</button>
+      <button class="btn btn-green btn-full" onclick="confirmDelivery()">✅ Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL SÉQUESTRE ═══ -->
+<div class="overlay" id="escrowModal">
+  <div class="modal modal-wide">
+    <button class="modal-close" onclick="closeModal('escrowModal')">✕</button>
+    <div class="modal-title">🔒 Nouveau paiement sécurisé</div>
+    <div class="modal-sub">Votre argent est bloqué jusqu'à confirmation de livraison</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">🔗 URL du produit <span class="label-hint">Copiez depuis le site</span></label>
+        <input type="url" class="form-input" id="escUrl" placeholder="https://jumia.ci/produit/..." />
+      </div>
+      <div class="form-group">
+        <label class="form-label">📦 Nom du produit</label>
+        <input type="text" class="form-input" id="escName" placeholder="Ex: iPhone 15 Pro Max" oninput="updateEscrowSummary()" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">💵 Prix affiché (FCFA)</label>
+        <div class="input-group"><span class="ig-pre">FCFA</span>
+          <input type="number" class="form-input" id="escPrice" placeholder="0" oninput="syncEscrowAmount()" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">💰 Montant à bloquer (FCFA)</label>
+        <div class="input-group"><span class="ig-pre">FCFA</span>
+          <input type="number" class="form-input" id="escAmount" placeholder="0" oninput="updateEscrowSummary()" />
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">🏦 Compte du vendeur</label>
+      <input type="text" class="form-input" id="escSeller" placeholder="orange_money:+22507xxxxxxxx – NomVendeur" oninput="updateEscrowSummary()" />
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">📅 Date limite de livraison</label>
+        <input type="date" class="form-input" id="escDeadline" oninput="updateEscrowSummary()" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">📝 Instructions (optionnel)</label>
+        <input type="text" class="form-input" id="escNotes" placeholder="Couleur, taille, adresse..." />
+      </div>
+    </div>
+    <div class="escrow-summary" id="escrowSummary" style="display:none;"></div>
+    <div class="g2 gap-8" style="margin-top:16px;">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('escrowModal')">Annuler</button>
+      <button class="btn btn-cta btn-full" onclick="submitEscrow()">🔒 Lancer le séquestre →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL RECHARGE ═══ -->
+<div class="overlay" id="rechargeModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('rechargeModal')">✕</button>
+    <div class="modal-icon">💰</div>
+    <div class="modal-title">Recharger mon compte</div>
+    <div class="modal-sub">Choisissez votre méthode de recharge</div>
+    <div class="pm-grid-modal">
+      <div class="pm-card" onclick="selPm(this,'Orange Money','phone')"><div class="pm-ico">🟠</div>Orange Money</div>
+      <div class="pm-card" onclick="selPm(this,'MTN MoMo','phone')"><div class="pm-ico">🟡</div>MTN MoMo</div>
+      <div class="pm-card" onclick="selPm(this,'Wave','phone')"><div class="pm-ico">🌊</div>Wave</div>
+      <div class="pm-card" onclick="selPm(this,'Moov Money','phone')"><div class="pm-ico">💚</div>Moov Money</div>
+      <div class="pm-card" onclick="selPm(this,'Mastercard','card')"><div class="pm-ico">💳</div>Mastercard</div>
+      <div class="pm-card" onclick="selPm(this,'Visa','card')"><div class="pm-ico">💳</div>Visa</div>
+      <div class="pm-card" onclick="selPm(this,'PayPal','paypal')"><div class="pm-ico">🅿️</div>PayPal</div>
+      <div class="pm-card" onclick="selPm(this,'Crypto','crypto')"><div class="pm-ico">₿</div>Crypto</div>
+    </div>
+    <div id="pmFields"></div>
+    <div class="form-group">
+      <label class="form-label">Montant (FCFA)</label>
+      <div class="input-group"><span class="ig-pre">FCFA</span>
+        <input type="number" class="form-input" id="rchAmount" placeholder="Minimum 500" />
+      </div>
+    </div>
+    <div class="quick-amounts">
+      <button class="btn btn-ghost btn-sm" onclick="setQ(1000)">1 000</button>
+      <button class="btn btn-ghost btn-sm" onclick="setQ(5000)">5 000</button>
+      <button class="btn btn-ghost btn-sm" onclick="setQ(10000)">10 000</button>
+      <button class="btn btn-ghost btn-sm" onclick="setQ(25000)">25 000</button>
+      <button class="btn btn-ghost btn-sm" onclick="setQ(50000)">50 000</button>
+      <button class="btn btn-ghost btn-sm" onclick="setQ(100000)">100 000</button>
+    </div>
+    <button class="btn btn-cta btn-full btn-lg" onclick="doRecharge()">Recharger →</button>
+  </div>
+</div>
+
+<!-- ═══ MODAL TRANSFERT ═══ -->
+<div class="overlay" id="transferModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('transferModal')">✕</button>
+    <div class="modal-icon">↗️</div>
+    <div class="modal-title">Confirmer le transfert</div>
+    <div class="modal-kv" id="transferInfo"></div>
+    <div class="g2 gap-8">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('transferModal')">Annuler</button>
+      <button class="btn btn-cta btn-full" onclick="executeTransfer()">Envoyer →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL CLÉ API ═══ -->
+<div class="overlay" id="apiKeyModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('apiKeyModal')">✕</button>
+    <div class="modal-icon">🔑</div>
+    <div class="modal-title">Clé API générée</div>
+    <div class="modal-sub">Copiez-la maintenant — elle ne sera plus affichée</div>
+    <div class="api-key-reveal" id="apiKeyReveal"></div>
+    <div class="alert alert-warn" style="margin:12px 0;">
+      <div class="alert-icon">⚠️</div>
+      <div><div class="alert-title">Ne partagez jamais cette clé</div>
+        <div class="alert-body">Stockez-la uniquement dans une variable d'environnement côté serveur (.env).</div>
+      </div>
+    </div>
+    <button class="btn btn-cta btn-full" onclick="copyApiKey()">📋 Copier la clé secrète</button>
+  </div>
+</div>
+
+<script src="assets/js/utils.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/payments.js"></script>
+<script src="assets/js/ui.js"></script>
+</body>
+</html>
